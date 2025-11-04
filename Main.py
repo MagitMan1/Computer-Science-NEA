@@ -34,12 +34,10 @@ world = WorldGenerator.PerlinNoiseWorldGenerator(WorldGenerator.seed)
 # Life setup ----------------------------------------------
 creatureBase.surface = screen
 # P producer
-grass = Life.PrimaryProducers.generateRandomPixels(world, 25)
-IDtoRemove = 1
-lastKilledCluster = None
+grass = Life.PrimaryProducers.generateRandomPixels(world, 65)
 
 # Creatures
-pConsumers = creatureBase.spawnRace(1, "Race1", 0.2, "p")
+pConsumers = creatureBase.spawnRace(1, "Race1", 0.2, "p", 3)
 #sConsumers = creatureBase.spawnRace(2, "Race2", 0.2, "s")
 #tConsumers = creatureBase.spawnRace(2, "Race3", 2, "t")
 # ---------------------------------------------------------
@@ -75,10 +73,6 @@ while running:
             # Re centre camera
             if event.key == pygame.K_h:
                 centreCamera()
-            if event.key == pygame.K_x:
-                if devMode:
-                    Life.PrimaryProducers.KillGrass(world, grass, IDtoRemove)
-                    IDtoRemove += 1
 
     # Keybinds
     keys = pygame.key.get_pressed()

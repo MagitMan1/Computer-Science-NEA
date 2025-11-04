@@ -5,12 +5,16 @@ import Life.PrimaryProducers as producers
 import random
 import math
 
-# Add tolerance to solve the eating state issue
+# Delete grass after eating
 # Write
-# Github setup
-# Move to food, then print eating
-# Write up
-# AI name based on creature type
+# Fix corner bug
+# Make eating system work on predators, if chase lasts over CHASE TIME attrivute then revert to raoming, prey stops moving on predator eating state
+# Ensure eating system is perfect
+# ------------------------------------
+# Energy system - 0 energy = death, decreases over time, increased by food. 1x multiplier, movement energy go down faster while moving
+# Reproduction
+# Extensive ai generated dictionary of creature names
+# Seed loading
 
 # Basic setup
 creatures = {}
@@ -21,13 +25,25 @@ usedColors = []
 creatureVisionVisualisation = True
 
 def stateMachine(creature):
+    current_time = pygame.time.get_ticks()
     if creature["foodSeen"] and creature["atFood"] == False:
         currentState = "Chasing"
     else:
         currentState = "Roaming"
+
     if creature["atFood"]:
         currentState = "Eating"
-        print("EATING")
+        if "eat_start_time" not in creature:
+            creature["eat_start_time"] = current_time
+
+        elapsed = (current_time - creature["eat_start_time"])
+        if elapsed >= creature["EatTime"]:
+            print("Finished eating!")
+            creature["atFood"] = False
+            creature["foodSeen"] = False
+            del creature["eat_start_time"]
+            currentState = "Roaming"
+    print(currentState)
     return currentState
 
 def colorDecider():
@@ -46,7 +62,7 @@ def tintImage(color):
     del arr
     return tinted
 
-def spawnRace(population, name, speed, trophicLevel):
+def spawnRace(population, name, speed, trophicLevel, EatTime):
     global creatures
     if not(trophicLevel == "p" or trophicLevel == "s" or trophicLevel == "t"):
         raise TypeError("Incorrect trophic level specified, cannot create creature")
@@ -78,7 +94,8 @@ def spawnRace(population, name, speed, trophicLevel):
             "currentState": None,
             "foodSeen": False,
             "foodLocation": None,
-            "atFood": False
+            "atFood": False,
+            "EatTime": EatTime * 1000
         }
     return creatures
 
@@ -111,29 +128,30 @@ def creatureVision(spawnX, spawnY, fov, length, creature):
     maxY = min(surface.get_height(), int(max(p[1] for p in points)))
 
     # Food detection for primary consumers
-    creature["foodSeen"] = False
-    creature["foodLocation"] = None
+    if not creature["foodSeen"]:
+        creature["foodSeen"] = False
+        creature["foodLocation"] = None
 
-    if creature["TrophicLevel"] == "p":
-        for y in range(minY, maxY):
-            for x in range(minX, maxX):
-                if s.get_at((x, y)):
-                    if surface.get_at((x, y)) == producers.color:
-                        creature["foodSeen"] = True
-                        worldX = x - spawnX + creature["x"]
-                        worldY = y - spawnY + creature["y"]
-                        creature["foodLocation"] = (worldX, worldY)
-                        break
+        if creature["TrophicLevel"] == "p":
+            for y in range(minY, maxY):
+                for x in range(minX, maxX):
+                    if s.get_at((x, y)):
+                        if surface.get_at((x, y)) == producers.color:
+                            creature["foodSeen"] = True
+                            worldX = x - spawnX + creature["x"]
+                            worldY = y - spawnY + creature["y"]
+                            creature["foodLocation"] = (worldX, worldY)
+                            break
 
-    # Food detection for Secondary consumers
-    elif creature["TrophicLevel"] == "s":
-        detectPrey(creature, preyLevels=["p"], spawnX=spawnX, spawnY=spawnY, s=s, minX=minX, maxX=maxX, minY=minY,
-                   maxY=maxY, creatures=creatures)
+        # Food detection for Secondary consumers
+        elif creature["TrophicLevel"] == "s":
+            detectPrey(creature, preyLevels=["p"], spawnX=spawnX, spawnY=spawnY, s=s, minX=minX, maxX=maxX, minY=minY,
+                       maxY=maxY, creatures=creatures)
 
-    # Food detection for Tertiary consumers
-    elif creature["TrophicLevel"] == "t":
-        detectPrey(creature, preyLevels=["p", "s"], spawnX=spawnX, spawnY=spawnY, s=s, minX=minX, maxX=maxX, minY=minY,
-                   maxY=maxY, creatures=creatures)
+        # Food detection for Tertiary consumers
+        elif creature["TrophicLevel"] == "t":
+            detectPrey(creature, preyLevels=["p", "s"], spawnX=spawnX, spawnY=spawnY, s=s, minX=minX, maxX=maxX, minY=minY,
+                       maxY=maxY, creatures=creatures)
 
     surface.blit(s, (0, 0))
 
@@ -200,8 +218,9 @@ def movementHandler(creature, currentTime, worldSurface):
         mag = math.sqrt(dx ** 2 + dy ** 2)
         if mag > 0:
             move(dx, dy, mag, creature)
-        print("MOVING TO FOOD")
-        if (creature["x"], creature["y"]) == creature["foodLocation"]:
+        tolerance = 1
+        if abs(creature["x"] - creature["foodLocation"][0]) <= tolerance and abs(
+                creature["y"] - creature["foodLocation"][1]) <= tolerance:
             creature["atFood"] = True
 
 def move(dx, dy, mag, creature):
