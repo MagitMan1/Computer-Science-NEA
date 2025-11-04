@@ -40,6 +40,8 @@ grass = Life.PrimaryProducers.generateRandomPixels(world, 65)
 pConsumers = creatureBase.spawnRace(1, "Race1", 0.2, "p", 3)
 #sConsumers = creatureBase.spawnRace(2, "Race2", 0.2, "s")
 #tConsumers = creatureBase.spawnRace(2, "Race3", 2, "t")
+
+creatureBase.world = world
 # ---------------------------------------------------------
 
 def centreCamera():
