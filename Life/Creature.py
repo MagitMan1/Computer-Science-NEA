@@ -5,13 +5,18 @@ import Life.PrimaryProducers as producers
 import random
 import math
 
-# Write up
+# Fix edge bug
+# Grass regrowth
 # Make eating system work on predators, if chase lasts over CHASE TIME attribute then revert to roaming, prey stops moving on predator eating state
 # Ensure eating system is perfect
+# Write up
 # ------------------------------------
+# Make vision customisable
+# Make it so you can turn on and off vision visualisation
+# Speed glitching via performance
 # Energy system - 0 energy = death, decreases over time, increased by food. 1x multiplier, movement energy go down faster while moving
 # Reproduction
-# Extensive ai generated dictionary of creature names
+# Extensive ai generated dictionary of creature names - Not generating the name in the moment
 # Seed loading
 
 # Basic setup
@@ -23,8 +28,7 @@ world = None # Set in main
 # User controled variables
 creatureVisionVisualisation = True
 
-def stateMachine(creature):
-    current_time = pygame.time.get_ticks()
+def stateMachine(creature, currentTime):
     if creature["foodSeen"] and creature["atFood"] == False:
         currentState = "Chasing"
     else:
@@ -32,20 +36,18 @@ def stateMachine(creature):
 
     if creature["atFood"]:
         currentState = "Eating"
-        if "eat_start_time" not in creature:
-            creature["eat_start_time"] = current_time
+        if "eatStartTime" not in creature:
+            creature["eatStartTime"] = currentTime
 
-        elapsed = (current_time - creature["eat_start_time"])
+        elapsed = (currentTime - creature["eatStartTime"])
         if elapsed >= creature["EatTime"]:
             clusterId = creature.get("foodCluster")
             producers.KillGrass(world, producers.clusters, clusterId)
-            print(clusterId)
 
             creature["atFood"] = False
             creature["foodSeen"] = False
-            del creature["eat_start_time"]
+            del creature["eatStartTime"]
             currentState = "Roaming"
-    #print(currentState)
     return currentState
 
 def colorDecider():
@@ -130,11 +132,11 @@ def creatureVision(spawnX, spawnY, fov, length, creature):
     minY = max(0, int(min(p[1] for p in points)))
     maxY = min(surface.get_height(), int(max(p[1] for p in points)))
 
-    # Food detection for primary consumers
     if not creature["foodSeen"]:
         creature["foodSeen"] = False
         creature["foodLocation"] = None
 
+        # Food detection for primary consumers
         if creature["TrophicLevel"] == "p":
             for y in range(minY, maxY):
                 for x in range(minX, maxX):
@@ -221,7 +223,6 @@ def movementHandler(creature, currentTime, worldSurface):
 
         if not creature["ShouldStop"]:
             mag = math.sqrt(dx ** 2 + dy ** 2)
-
             if mag > 0:
                 move(dx, dy, mag, creature)
     elif creature["currentState"] == "Chasing":
@@ -229,8 +230,7 @@ def movementHandler(creature, currentTime, worldSurface):
         if mag > 0:
             move(dx, dy, mag, creature)
         tolerance = 1
-        if abs(creature["x"] - creature["foodLocation"][0]) <= tolerance and abs(
-                creature["y"] - creature["foodLocation"][1]) <= tolerance:
+        if abs(creature["x"] - creature["foodLocation"][0]) <= tolerance and abs(creature["y"] - creature["foodLocation"][1]) <= tolerance:
             creature["atFood"] = True
 
 def move(dx, dy, mag, creature):
@@ -242,16 +242,8 @@ def move(dx, dy, mag, creature):
 
 
 def findClusterAtPosition(x, y, tolerance):
-    if not producers.clusters:
-        print(f"Warning: No clusters exist!")
-        return None
-
     for clusterId, pixels in producers.clusters.items():
         for px, py in pixels:
             if abs(px - int(x)) <= tolerance and abs(py - int(y)) <= tolerance:
-                print(f"Found cluster {clusterId} at ({px}, {py}) for search ({x}, {y})")
                 return clusterId
-
-    print(f"No cluster found at ({x}, {y}) with tolerance {tolerance}")
-    print(f"Total clusters: {len(producers.clusters)}")
     return None

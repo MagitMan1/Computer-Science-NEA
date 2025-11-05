@@ -100,7 +100,7 @@ while running:
     drawnSpecies = set()
     for creature in creatureBase.creatures.values():
         # Variables to setup
-        creature["currentState"] = creatureBase.stateMachine(creature)
+        creature["currentState"] = creatureBase.stateMachine(creature, currentTime)
         creature["vision"] = creatureBase.creatureVision(
             camX + creature["x"] + creature["body"].get_width() // 2,
             camY + creature["y"] + creature["body"].get_height() // 2, 60, 100,
