@@ -5,8 +5,10 @@ import Life.PrimaryProducers as producers
 import random
 import math
 
+# Evading state
+
 # When seeing a predator, prey turn the opposite direction
-# After turning they move for a random time (min and max run time - creature specific)
+# After turning they move for a set time
 # While runnning they do not seek food until their timer is up
 # Write up
 
@@ -18,6 +20,7 @@ import math
 # Energy system - 0 energy = death, decreases over time, increased by food. 1x multiplier, movement energy go down faster while moving
 # Reproduction
 # Extensive ai generated dictionary of creature names - Not generating the name in the moment
+# MAJOR CODE CLEANUP
 # Seed loading
 # creature avoids water
 
@@ -31,6 +34,9 @@ def stateMachine(creature, currentTime, creatures):
     if creature["currentState"] == "Frozen":
         return "Frozen"
 
+    if creature["currentState"] == "Evading":
+        return "Evading"
+
     if creature["foodSeen"] and creature["atFood"] == False:
         currentState = "Chasing"
     else:
@@ -38,6 +44,7 @@ def stateMachine(creature, currentTime, creatures):
 
     if creature["atFood"]:
         currentState = "Eating"
+        creature["creatureVisionVisualisation"] = False
         if "eatStartTime" not in creature:
             creature["eatStartTime"] = currentTime
 
@@ -55,6 +62,7 @@ def stateMachine(creature, currentTime, creatures):
             creature["atFood"] = False
             creature["foodSeen"] = False
             del creature["eatStartTime"]
+            creature["creatureVisionVisualisation"] = True
             currentState = "Roaming"
     return currentState
 
@@ -74,7 +82,7 @@ def tintImage(color):
     del arr
     return tinted
 
-def spawnRace(population, name, speed, trophicLevel, EatTime):
+def spawnRace(population, name, speed, trophicLevel, EatTime, EvadeTime):
     global creatures
     if not(trophicLevel == "p" or trophicLevel == "s" or trophicLevel == "t"):
         raise TypeError("Incorrect trophic level specified, cannot create creature")
@@ -109,7 +117,9 @@ def spawnRace(population, name, speed, trophicLevel, EatTime):
             "atFood": False,
             "EatTime": EatTime * 1000,
             "FoodCluster": None,
-            "creatureVisionVisualisation": True
+            "creatureVisionVisualisation": True,
+            "predatorLocation": None,
+            "evadeTime": EvadeTime * 1000 if trophicLevel in ["p", "s"] else None
         }
     return creatures
 
@@ -140,6 +150,37 @@ def creatureVision(spawnX, spawnY, fov, length, creature):
     maxX = min(surface.get_width(), int(max(p[0] for p in points)))
     minY = max(0, int(min(p[1] for p in points)))
     maxY = min(surface.get_height(), int(max(p[1] for p in points)))
+
+    predatorSeen = False
+    for otherCreature in creatures.values():
+        if otherCreature is creature:
+            continue
+
+        isPredator = False
+        if creature["TrophicLevel"] == "p" and otherCreature["TrophicLevel"] in ["s", "t"]:
+            isPredator = True
+        elif creature["TrophicLevel"] == "s" and otherCreature["TrophicLevel"] == "t":
+            isPredator = True
+
+        if isPredator:
+            camOffsetX = spawnX - creature["x"] - creature["body"].get_width() // 2
+            camOffsetY = spawnY - creature["y"] - creature["body"].get_height() // 2
+
+            otherScreenX = camOffsetX + otherCreature["x"] + otherCreature["body"].get_width() // 2
+            otherScreenY = camOffsetY + otherCreature["y"] + otherCreature["body"].get_height() // 2
+
+            if minX <= otherScreenX <= maxX and minY <= otherScreenY <= maxY:
+                try:
+                    if s.get_at((int(otherScreenX), int(otherScreenY))).a > 0:
+                        creature["currentState"] = "Evading"
+                        creature["predatorLocation"] = (otherCreature["x"], otherCreature["y"])
+                        break
+                except IndexError:
+                    pass
+
+    if not creature["foodSeen"] and not predatorSeen:
+        creature["foodSeen"] = False
+        creature["foodLocation"] = None
 
     if not creature["foodSeen"]:
         creature["foodSeen"] = False
@@ -212,6 +253,18 @@ def turnHandler(creature, currentTime):
                 creature["lookDirectionY"] = random.randint(-360, 360)
                 creature["turnInterval"] = currentTime + (random.randint(1, 4) * 1000)
 
+        elif creature["currentState"] == "Evading" and creature.get("predatorLocation"):
+            # Turn AWAY from predator
+            predatorX, predatorY = creature["predatorLocation"]
+            dx = creature["x"] - predatorX  # Reversed: away from predator
+            dy = creature["y"] - predatorY  # Reversed: away from predator
+
+            # normalize
+            mag = math.sqrt(dx ** 2 + dy ** 2)
+            if mag > 0:
+                creature["lookDirectionX"] = dx / mag
+                creature["lookDirectionY"] = dy / mag
+
         elif creature["currentState"] == "Chasing" and creature.get("foodLocation"):
             if creature.get("preyId") is not None and creature["preyId"] in creatures:
                 prey = creatures[creature["preyId"]]
@@ -245,6 +298,22 @@ def movementHandler(creature, currentTime, worldSurface):
                 mag = math.sqrt(dx ** 2 + dy ** 2)
                 if mag > 0:
                     move(dx, dy, mag, creature)
+
+        elif creature["currentState"] == "Evading":
+            mag = math.sqrt(dx ** 2 + dy ** 2)
+            if mag > 0:
+                move(dx, dy, mag, creature)
+
+            if creature.get("predatorLocation"):
+                if "evadeStartTime" not in creature:
+                    creature["evadeStartTime"] = currentTime
+                elapsed = (currentTime - creature["evadeStartTime"])
+                if elapsed >= creature["evadeTime"]:
+                    del creature["evadeStartTime"]
+                    creature["predatorSeen"] = False
+                    creature["predatorLocation"] = None
+                    creature["currentState"] = "Roaming"
+
         elif creature["currentState"] == "Chasing":
             mag = math.sqrt(dx ** 2 + dy ** 2)
             if mag > 0:

@@ -37,9 +37,9 @@ creatureBase.surface = screen
 grass = Life.PrimaryProducers.generateRandomPixels(world, 65)
 
 # Creatures
-#pConsumers = creatureBase.spawnRace(2, "Race1", 0.2, "p", 3)
-sConsumers = creatureBase.spawnRace(10, "Race2", 0.25, "s", 5)
-tConsumers = creatureBase.spawnRace(1, "Race3", 0.75, "t", 4)
+pConsumers = creatureBase.spawnRace(5, "Race1", 0.75, "p", 3, 5)
+sConsumers = creatureBase.spawnRace(5, "Race2", 0.75, "s", 5, 3)
+#tConsumers = creatureBase.spawnRace(1, "Race3", 0.75, "t", 4, None)
 
 creatureBase.world = world
 # ---------------------------------------------------------
