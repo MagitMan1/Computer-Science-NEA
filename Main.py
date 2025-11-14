@@ -37,9 +37,9 @@ creatureBase.surface = screen
 grass = Life.PrimaryProducers.generateRandomPixels(world, 65)
 
 # Creatures
-pConsumers = creatureBase.spawnRace(5, "Race1", 0.75, "p", 3, 5)
-sConsumers = creatureBase.spawnRace(5, "Race2", 0.75, "s", 5, 3)
-#tConsumers = creatureBase.spawnRace(1, "Race3", 0.75, "t", 4, None)
+pConsumers = creatureBase.spawnRace(2, "Race1", 0.75, "p", 3, 5, 120, 40)
+sConsumers = creatureBase.spawnRace(2, "Race2", 0.75, "s", 5, 3, 30, 150)
+tConsumers = creatureBase.spawnRace(2, "Race3", 0.75, "t", 4, None, 90, 75)
 
 creatureBase.world = world
 # ---------------------------------------------------------
@@ -103,7 +103,7 @@ while running:
         creature["currentState"] = creatureBase.stateMachine(creature, currentTime, creatureBase.creatures)
         creature["vision"] = creatureBase.creatureVision(
             camX + creature["x"] + creature["body"].get_width() // 2,
-            camY + creature["y"] + creature["body"].get_height() // 2, 60, 100,
+            camY + creature["y"] + creature["body"].get_height() // 2,
             creature
         )
         # Functions to call

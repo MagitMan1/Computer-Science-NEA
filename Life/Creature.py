@@ -5,16 +5,9 @@ import Life.PrimaryProducers as producers
 import random
 import math
 
-# Evading state
-
-# When seeing a predator, prey turn the opposite direction
-# After turning they move for a set time
-# While runnning they do not seek food until their timer is up
-# Write up
+# Colour changing vision proof
 
 # ------------------------------------
-# Make vision customisable
-# Make vision visualisation a permenant feature, Colour changes to be opposite of the base colour on the colour spcetrum
 # Grass regrowth
 # Speed glitching via performance
 # Energy system - 0 energy = death, decreases over time, increased by food. 1x multiplier, movement energy go down faster while moving
@@ -82,7 +75,7 @@ def tintImage(color):
     del arr
     return tinted
 
-def spawnRace(population, name, speed, trophicLevel, EatTime, EvadeTime):
+def spawnRace(population, name, speed, trophicLevel, EatTime, EvadeTime, FOV, viewDistance):
     global creatures
     if not(trophicLevel == "p" or trophicLevel == "s" or trophicLevel == "t"):
         raise TypeError("Incorrect trophic level specified, cannot create creature")
@@ -119,12 +112,16 @@ def spawnRace(population, name, speed, trophicLevel, EatTime, EvadeTime):
             "FoodCluster": None,
             "creatureVisionVisualisation": True,
             "predatorLocation": None,
-            "evadeTime": EvadeTime * 1000 if trophicLevel in ["p", "s"] else None
+            "evadeTime": EvadeTime * 1000 if trophicLevel in ["p", "s"] else None,
+            "FOV": FOV,
+            "viewDistance": viewDistance
         }
     return creatures
 
-def creatureVision(spawnX, spawnY, fov, length, creature):
+def creatureVision(spawnX, spawnY, creature):
     global foodSeen
+    fov = creature["FOV"]
+    length = creature["viewDistance"]
 
     fov = math.radians(fov)
     numRays = 5
@@ -144,14 +141,14 @@ def creatureVision(spawnX, spawnY, fov, length, creature):
         points.append((pos[0] + math.cos(rayAngle) * length, pos[1] + math.sin(rayAngle) * length))
 
     if creature["creatureVisionVisualisation"]:
-        pygame.draw.polygon(s, (0, 255, 0, 100), points)
+        background = worldGenerator.base
+        pygame.draw.polygon(s, (255-background[0], 255-background[1], 255-background[2], 100), points)
 
     minX = max(0, int(min(p[0] for p in points)))
     maxX = min(surface.get_width(), int(max(p[0] for p in points)))
     minY = max(0, int(min(p[1] for p in points)))
     maxY = min(surface.get_height(), int(max(p[1] for p in points)))
 
-    predatorSeen = False
     for otherCreature in creatures.values():
         if otherCreature is creature:
             continue
@@ -178,11 +175,7 @@ def creatureVision(spawnX, spawnY, fov, length, creature):
                 except IndexError:
                     pass
 
-    if not creature["foodSeen"] and not predatorSeen:
-        creature["foodSeen"] = False
-        creature["foodLocation"] = None
-
-    if not creature["foodSeen"]:
+    if not creature["foodSeen"] and not creature["currentState"] == "Evading":
         creature["foodSeen"] = False
         creature["foodLocation"] = None
 
@@ -254,12 +247,10 @@ def turnHandler(creature, currentTime):
                 creature["turnInterval"] = currentTime + (random.randint(1, 4) * 1000)
 
         elif creature["currentState"] == "Evading" and creature.get("predatorLocation"):
-            # Turn AWAY from predator
             predatorX, predatorY = creature["predatorLocation"]
-            dx = creature["x"] - predatorX  # Reversed: away from predator
-            dy = creature["y"] - predatorY  # Reversed: away from predator
+            dx = creature["x"] - predatorX
+            dy = creature["y"] - predatorY
 
-            # normalize
             mag = math.sqrt(dx ** 2 + dy ** 2)
             if mag > 0:
                 creature["lookDirectionX"] = dx / mag
@@ -274,7 +265,6 @@ def turnHandler(creature, currentTime):
             dx = foodX - creature["x"]
             dy = foodY - creature["y"]
 
-            # normalize
             mag = math.sqrt(dx ** 2 + dy ** 2)
             if mag > 0:
                 creature["lookDirectionX"] = dx / mag

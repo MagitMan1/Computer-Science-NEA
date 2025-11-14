@@ -1,6 +1,4 @@
 # World gen
-from zoneinfo import reset_tzpath
-
 import pygame
 import random
 from perlin_noise import PerlinNoise
