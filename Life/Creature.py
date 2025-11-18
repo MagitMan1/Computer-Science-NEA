@@ -5,19 +5,15 @@ import Life.PrimaryProducers as producers
 import random
 import math
 
-# Fix edge bug
-# Grass regrowth
-# Make eating system work on predators, if chase lasts over CHASE TIME attribute then revert to roaming, prey stops moving on predator eating state
-# Ensure eating system is perfect
-# Write up
-# ------------------------------------
-# Make vision customisable
-# Make it so you can turn on and off vision visualisation
-# Speed glitching via performance
 # Energy system - 0 energy = death, decreases over time, increased by food. 1x multiplier, movement energy go down faster while moving
+
+# ------------------------------------
 # Reproduction
-# Extensive ai generated dictionary of creature names - Not generating the name in the moment
+# Speed glitching via performance - delta time?, general optimisation
+# Extensive AI generated dictionary of creature names - Not generating the name in the moment
+# MAJOR CODE CLEANUP
 # Seed loading
+# creature avoids water
 
 # Basic setup
 creatures = {}
@@ -25,10 +21,13 @@ surface = None
 usedColors = []
 world = None # Set in main
 
-# User controled variables
-creatureVisionVisualisation = True
+def stateMachine(creature, currentTime, creatures):
+    if creature["currentState"] == "Frozen":
+        return "Frozen"
 
-def stateMachine(creature, currentTime):
+    if creature["currentState"] == "Evading":
+        return "Evading"
+
     if creature["foodSeen"] and creature["atFood"] == False:
         currentState = "Chasing"
     else:
@@ -36,17 +35,25 @@ def stateMachine(creature, currentTime):
 
     if creature["atFood"]:
         currentState = "Eating"
+        creature["creatureVisionVisualisation"] = False
         if "eatStartTime" not in creature:
             creature["eatStartTime"] = currentTime
 
         elapsed = (currentTime - creature["eatStartTime"])
         if elapsed >= creature["EatTime"]:
-            clusterId = creature.get("foodCluster")
-            producers.KillGrass(world, producers.clusters, clusterId)
+            if creature["TrophicLevel"] == "p":
+                clusterId = creature.get("foodCluster")
+                producers.KillGrass(world, producers.clusters, clusterId)
+            elif creature["TrophicLevel"] in ["s", "t"]:
+                preyId = creature.get("preyId")
+                if preyId is not None and preyId in creatures:
+                    del creatures[preyId]
+                    del creature["preyId"]
 
             creature["atFood"] = False
             creature["foodSeen"] = False
             del creature["eatStartTime"]
+            creature["creatureVisionVisualisation"] = True
             currentState = "Roaming"
     return currentState
 
@@ -66,7 +73,7 @@ def tintImage(color):
     del arr
     return tinted
 
-def spawnRace(population, name, speed, trophicLevel, EatTime):
+def spawnRace(population, name, speed, trophicLevel, EatTime, EvadeTime, FOV, viewDistance):
     global creatures
     if not(trophicLevel == "p" or trophicLevel == "s" or trophicLevel == "t"):
         raise TypeError("Incorrect trophic level specified, cannot create creature")
@@ -100,12 +107,19 @@ def spawnRace(population, name, speed, trophicLevel, EatTime):
             "foodLocation": None,
             "atFood": False,
             "EatTime": EatTime * 1000,
-            "FoodCluster": None
+            "FoodCluster": None,
+            "creatureVisionVisualisation": True,
+            "predatorLocation": None,
+            "evadeTime": EvadeTime * 1000 if trophicLevel in ["p", "s"] else None,
+            "FOV": FOV,
+            "viewDistance": viewDistance
         }
     return creatures
 
-def creatureVision(spawnX, spawnY, fov, length, creature):
+def creatureVision(spawnX, spawnY, creature):
     global foodSeen
+    fov = creature["FOV"]
+    length = creature["viewDistance"]
 
     fov = math.radians(fov)
     numRays = 5
@@ -124,15 +138,42 @@ def creatureVision(spawnX, spawnY, fov, length, creature):
         rayAngle = angle - halfFov + (fov * i / numRays)
         points.append((pos[0] + math.cos(rayAngle) * length, pos[1] + math.sin(rayAngle) * length))
 
-    if creatureVisionVisualisation:
-        pygame.draw.polygon(s, (0, 255, 0, 100), points)
+    if creature["creatureVisionVisualisation"]:
+        background = worldGenerator.base
+        pygame.draw.polygon(s, (255-background[0], 255-background[1], 255-background[2], 100), points)
 
     minX = max(0, int(min(p[0] for p in points)))
     maxX = min(surface.get_width(), int(max(p[0] for p in points)))
     minY = max(0, int(min(p[1] for p in points)))
     maxY = min(surface.get_height(), int(max(p[1] for p in points)))
 
-    if not creature["foodSeen"]:
+    for otherCreature in creatures.values():
+        if otherCreature is creature:
+            continue
+
+        isPredator = False
+        if creature["TrophicLevel"] == "p" and otherCreature["TrophicLevel"] in ["s", "t"]:
+            isPredator = True
+        elif creature["TrophicLevel"] == "s" and otherCreature["TrophicLevel"] == "t":
+            isPredator = True
+
+        if isPredator:
+            camOffsetX = spawnX - creature["x"] - creature["body"].get_width() // 2
+            camOffsetY = spawnY - creature["y"] - creature["body"].get_height() // 2
+
+            otherScreenX = camOffsetX + otherCreature["x"] + otherCreature["body"].get_width() // 2
+            otherScreenY = camOffsetY + otherCreature["y"] + otherCreature["body"].get_height() // 2
+
+            if minX <= otherScreenX <= maxX and minY <= otherScreenY <= maxY:
+                try:
+                    if s.get_at((int(otherScreenX), int(otherScreenY))).a > 0:
+                        creature["currentState"] = "Evading"
+                        creature["predatorLocation"] = (otherCreature["x"], otherCreature["y"])
+                        break
+                except IndexError:
+                    pass
+
+    if not creature["foodSeen"] and not creature["currentState"] == "Evading":
         creature["foodSeen"] = False
         creature["foodLocation"] = None
 
@@ -171,7 +212,6 @@ def detectPrey(creature, preyLevels, spawnX, spawnY, s, minX, maxX, minY, maxY, 
     for otherCreature in creatures.values():
         if otherCreature is creature:
             continue
-
         if otherCreature["TrophicLevel"] not in preyLevels:
             continue
 
@@ -185,53 +225,94 @@ def detectPrey(creature, preyLevels, spawnX, spawnY, s, minX, maxX, minY, maxY, 
             try:
                 if s.get_at((int(otherScreenX), int(otherScreenY))).a > 0:
                     creature["foodSeen"] = True
+                    creature["foodLocation"] = (otherCreature["x"], otherCreature["y"])
+
+                    for creatureId, creatureObj in creatures.items():
+                        if creatureObj is otherCreature:
+                            creature["preyId"] = creatureId
+                            break
                     break
             except IndexError:
                 print("Error")
                 pass
 
 def turnHandler(creature, currentTime):
-    if creature["currentState"] == "Roaming":
-        if currentTime >= creature["turnInterval"]:
-            creature["lookDirectionX"] = random.randint(-640, 640)
-            creature["lookDirectionY"] = random.randint(-360, 360)
-            creature["turnInterval"] = currentTime + (random.randint(1, 4) * 1000)
+    if not creature["currentState"] == "Frozen":
+        if creature["currentState"] == "Roaming":
+            if currentTime >= creature["turnInterval"]:
+                creature["lookDirectionX"] = random.randint(-640, 640)
+                creature["lookDirectionY"] = random.randint(-360, 360)
+                creature["turnInterval"] = currentTime + (random.randint(1, 4) * 1000)
 
-    elif creature["currentState"] == "Chasing" and creature.get("foodLocation"):
-        foodX, foodY = creature["foodLocation"]
-        dx = foodX - creature["x"]
-        dy = foodY - creature["y"]
+        elif creature["currentState"] == "Evading" and creature.get("predatorLocation"):
+            predatorX, predatorY = creature["predatorLocation"]
+            dx = creature["x"] - predatorX
+            dy = creature["y"] - predatorY
 
-        # normalize
-        mag = math.sqrt(dx ** 2 + dy ** 2)
-        if mag > 0:
-            creature["lookDirectionX"] = dx / mag
-            creature["lookDirectionY"] = dy / mag
+            mag = math.sqrt(dx ** 2 + dy ** 2)
+            if mag > 0:
+                creature["lookDirectionX"] = dx / mag
+                creature["lookDirectionY"] = dy / mag
+
+        elif creature["currentState"] == "Chasing" and creature.get("foodLocation"):
+            if creature.get("preyId") is not None and creature["preyId"] in creatures:
+                prey = creatures[creature["preyId"]]
+                creature["foodLocation"] = (prey["x"], prey["y"])
+
+            foodX, foodY = creature["foodLocation"]
+            dx = foodX - creature["x"]
+            dy = foodY - creature["y"]
+
+            mag = math.sqrt(dx ** 2 + dy ** 2)
+            if mag > 0:
+                creature["lookDirectionX"] = dx / mag
+                creature["lookDirectionY"] = dy / mag
 
 def movementHandler(creature, currentTime, worldSurface):
     # Clamp to world boundaries (both min and max)
-    creature["x"] = max(0, min(creature["x"], worldSurface.get_width() - creature["body"].get_width()))
-    creature["y"] = max(0, min(creature["y"], worldSurface.get_height() - creature["body"].get_height()))
+    creature["x"] = max(0, min(creature["x"], worldSurface.get_width() - (creature["body"].get_width()/3)))
+    creature["y"] = max(0, min(creature["y"], worldSurface.get_height() - (creature["body"].get_height()/3)))
 
-    dx = creature["lookDirectionX"]
-    dy = creature["lookDirectionY"]
+    if not creature["currentState"] == "Frozen":
+        dx = creature["lookDirectionX"]
+        dy = creature["lookDirectionY"]
 
-    if creature["currentState"] == "Roaming":
-        if currentTime >= creature["MoveInterval"]:
-            creature["ShouldStop"] = random.choice([True, False])
-            creature["MoveInterval"] = pygame.time.get_ticks() + (random.randint(1, 3) * 1000)
+        if creature["currentState"] == "Roaming":
+            if currentTime >= creature["MoveInterval"]:
+                creature["ShouldStop"] = random.choice([True, False])
+                creature["MoveInterval"] = pygame.time.get_ticks() + (random.randint(1, 3) * 1000)
 
-        if not creature["ShouldStop"]:
+            if not creature["ShouldStop"]:
+                mag = math.sqrt(dx ** 2 + dy ** 2)
+                if mag > 0:
+                    move(dx, dy, mag, creature)
+
+        elif creature["currentState"] == "Evading":
             mag = math.sqrt(dx ** 2 + dy ** 2)
             if mag > 0:
                 move(dx, dy, mag, creature)
-    elif creature["currentState"] == "Chasing":
-        mag = math.sqrt(dx ** 2 + dy ** 2)
-        if mag > 0:
-            move(dx, dy, mag, creature)
-        tolerance = 1
-        if abs(creature["x"] - creature["foodLocation"][0]) <= tolerance and abs(creature["y"] - creature["foodLocation"][1]) <= tolerance:
-            creature["atFood"] = True
+
+            if creature.get("predatorLocation"):
+                if "evadeStartTime" not in creature:
+                    creature["evadeStartTime"] = currentTime
+                elapsed = (currentTime - creature["evadeStartTime"])
+                if elapsed >= creature["evadeTime"]:
+                    del creature["evadeStartTime"]
+                    creature["predatorSeen"] = False
+                    creature["predatorLocation"] = None
+                    creature["currentState"] = "Roaming"
+
+        elif creature["currentState"] == "Chasing":
+            mag = math.sqrt(dx ** 2 + dy ** 2)
+            if mag > 0:
+                move(dx, dy, mag, creature)
+            tolerance = 1
+            if abs(creature["x"] - creature["foodLocation"][0]) <= tolerance and abs(creature["y"] - creature["foodLocation"][1]) <= tolerance:
+                creature["atFood"] = True
+                if creature.get("preyId") is not None and creature["preyId"] in creatures:
+                    prey = creatures[creature["preyId"]]
+                    prey["currentState"] = "Frozen"
+                    prey["creatureVisionVisualisation"] = False
 
 def move(dx, dy, mag, creature):
     normalized_dx = (dx / mag) * creature["Speed"]
@@ -239,7 +320,6 @@ def move(dx, dy, mag, creature):
 
     creature["x"] += normalized_dx
     creature["y"] += normalized_dy
-
 
 def findClusterAtPosition(x, y, tolerance):
     for clusterId, pixels in producers.clusters.items():

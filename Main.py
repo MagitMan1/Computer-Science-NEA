@@ -8,8 +8,6 @@ import Life.Creature as creatureBase
 
 pygame.init()
 clock = pygame.time.Clock()
-clock.tick(20)
-currentTime = pygame.time.get_ticks()
 
 # User settings:
 windowedResolution = 1280, 720
@@ -37,9 +35,9 @@ creatureBase.surface = screen
 grass = Life.PrimaryProducers.generateRandomPixels(world, 65)
 
 # Creatures
-pConsumers = creatureBase.spawnRace(1, "Race1", 0.2, "p", 3)
-#sConsumers = creatureBase.spawnRace(2, "Race2", 0.2, "s")
-#tConsumers = creatureBase.spawnRace(2, "Race3", 2, "t")
+pConsumers = creatureBase.spawnRace(3, "Race1", 0.75, "p", 2, 5, 30, 115)
+#sConsumers = creatureBase.spawnRace(5, "Race2", 0.75, "s", 3, 3, 50, 85)
+#tConsumers = creatureBase.spawnRace(5, "Race3", 0.75, "t", 6, None, 75, 40)
 
 creatureBase.world = world
 # ---------------------------------------------------------
@@ -58,6 +56,7 @@ def centreCamera():
 centreCamera()
 
 while running:
+    clock.tick(60)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -98,12 +97,12 @@ while running:
     # Creature setup and initialisation
     creatureInfoYPosition = 35
     drawnSpecies = set()
-    for creature in creatureBase.creatures.values():
+    for creature in list(creatureBase.creatures.values()):
         # Variables to setup
-        creature["currentState"] = creatureBase.stateMachine(creature, currentTime)
+        creature["currentState"] = creatureBase.stateMachine(creature, currentTime, creatureBase.creatures)
         creature["vision"] = creatureBase.creatureVision(
             camX + creature["x"] + creature["body"].get_width() // 2,
-            camY + creature["y"] + creature["body"].get_height() // 2, 60, 100,
+            camY + creature["y"] + creature["body"].get_height() // 2,
             creature
         )
         # Functions to call
@@ -119,6 +118,9 @@ while running:
             )
             creatureInfoYPosition += 30
             drawnSpecies.add(creature["Name"])
+
+    # Regrowing grass
+    Life.PrimaryProducers.regrowGrass(currentTime)
 
     # Final display flip
     pygame.display.flip()
