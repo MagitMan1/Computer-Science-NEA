@@ -8,8 +8,6 @@ import Life.Creature as creatureBase
 
 pygame.init()
 clock = pygame.time.Clock()
-clock.tick(20)
-currentTime = pygame.time.get_ticks()
 
 # User settings:
 windowedResolution = 1280, 720
@@ -37,9 +35,9 @@ creatureBase.surface = screen
 grass = Life.PrimaryProducers.generateRandomPixels(world, 65)
 
 # Creatures
-pConsumers = creatureBase.spawnRace(2, "Race1", 0.75, "p", 3, 5, 120, 40)
-sConsumers = creatureBase.spawnRace(2, "Race2", 0.75, "s", 5, 3, 30, 150)
-tConsumers = creatureBase.spawnRace(2, "Race3", 0.75, "t", 4, None, 90, 75)
+pConsumers = creatureBase.spawnRace(3, "Race1", 0.75, "p", 2, 5, 30, 115)
+#sConsumers = creatureBase.spawnRace(5, "Race2", 0.75, "s", 3, 3, 50, 85)
+#tConsumers = creatureBase.spawnRace(5, "Race3", 0.75, "t", 6, None, 75, 40)
 
 creatureBase.world = world
 # ---------------------------------------------------------
@@ -58,6 +56,7 @@ def centreCamera():
 centreCamera()
 
 while running:
+    clock.tick(60)
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
@@ -119,6 +118,9 @@ while running:
             )
             creatureInfoYPosition += 30
             drawnSpecies.add(creature["Name"])
+
+    # Regrowing grass
+    Life.PrimaryProducers.regrowGrass(currentTime)
 
     # Final display flip
     pygame.display.flip()

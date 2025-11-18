@@ -5,14 +5,12 @@ import Life.PrimaryProducers as producers
 import random
 import math
 
-# Colour changing vision proof
+# Energy system - 0 energy = death, decreases over time, increased by food. 1x multiplier, movement energy go down faster while moving
 
 # ------------------------------------
-# Grass regrowth
-# Speed glitching via performance
-# Energy system - 0 energy = death, decreases over time, increased by food. 1x multiplier, movement energy go down faster while moving
 # Reproduction
-# Extensive ai generated dictionary of creature names - Not generating the name in the moment
+# Speed glitching via performance - delta time?, general optimisation
+# Extensive AI generated dictionary of creature names - Not generating the name in the moment
 # MAJOR CODE CLEANUP
 # Seed loading
 # creature avoids water
