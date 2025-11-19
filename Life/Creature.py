@@ -5,9 +5,6 @@ import Life.PrimaryProducers as producers
 import random
 import math
 
-# Creature energy displayed on the side
-# Current creature information tab
-
 # Energy system - 0 energy = death, decreases over time, increased by food. 1x multiplier, movement energy go down faster while moving
 
 # ------------------------------------

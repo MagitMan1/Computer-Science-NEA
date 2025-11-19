@@ -36,8 +36,8 @@ grass = Life.PrimaryProducers.generateRandomPixels(world, 65)
 
 # Creatures
 pConsumers = creatureBase.spawnRace(1, "Race1", 0.75, "p", 2, 5, 30, 115)
-sConsumers = creatureBase.spawnRace(1, "Race2", 0.75, "s", 3, 3, 50, 85)
-tConsumers = creatureBase.spawnRace(1, "Race3", 0.75, "t", 6, None, 75, 40)
+#sConsumers = creatureBase.spawnRace(1, "Race2", 0.75, "s", 3, 3, 50, 85)
+#tConsumers = creatureBase.spawnRace(1, "Race3", 0.75, "t", 6, None, 75, 40)
 
 creatureBase.world = world
 # ---------------------------------------------------------
@@ -99,6 +99,7 @@ while running:
     # Creature setup and initialisation
     creatureInfoYPosition = 35
     drawnSpecies = set()
+    hoveredCreature = None
     for creature in list(creatureBase.creatures.values()):
         # Variables to setup
         creature["currentState"] = creatureBase.stateMachine(creature, currentTime, creatureBase.creatures)
@@ -114,6 +115,7 @@ while running:
         # Blits
         isHovered = creatureBase.checkMouseHover(creature, mousePos, camX, camY)
         if isHovered:
+            hoveredCreature = creature
             visionColor = creatureBase.CalculateVisionColor()
             hoveredSprite = creatureBase.tintImage((visionColor[0], visionColor[1], visionColor[2]))
             screen.blit(hoveredSprite, (camX + creature["x"], camY + creature["y"]))
@@ -128,6 +130,19 @@ while running:
             )
             creatureInfoYPosition += 30
             drawnSpecies.add(creature["Name"])
+        # Selected creature Info
+        UI.drawCreatureInfoBox(screen, camX + 735, camY, 265, 170, (255, 255, 255))
+        screen.blit(UI.infoTitleText(), (camX + 735, camY))
+        # Properties:
+        if hoveredCreature is not None:
+            race = str(creature["Name"])
+            energy = str(creature["Energy"])
+            state = str(creature["currentState"])
+            screen.blit(UI.displayProperty(f"Race:                   {race}"), (camX + 735, camY + 35))
+            screen.blit(UI.displayProperty(f"Energy:                   {energy}"), (camX + 735, camY + 70))
+            screen.blit(UI.displayProperty(f"State: {state}"), (camX + 735, camY + 105))
+        else:
+            pass
 
     # Regrowing grass
     Life.PrimaryProducers.regrowGrass(currentTime)

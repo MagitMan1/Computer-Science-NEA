@@ -4,6 +4,7 @@ import pygame.time
 import WorldGeneration.WorldGenerator as WorldGenerator
 
 font = pygame.font.SysFont("Times", 30)
+smallFont = pygame.font.SysFont("Times", 27)
 
 # Loading text
 loadingText = font.render(f"Generating world...", True, (255, 255, 255))
@@ -17,3 +18,14 @@ def listCreatureColours(currentCreatureName, currentCreatureColor):
     return creatureInfo
 
 # Selected Creature Info
+def drawCreatureInfoBox(surface, x, y, width, height, color):
+    rect = pygame.draw.rect(surface, color, (x, y, width, height))
+    return rect
+
+def infoTitleText():
+    title = smallFont.render("Selected Creature Info: ", True, (0, 0, 0))
+    return title
+
+def displayProperty(creatureProperty):
+    property = smallFont.render(creatureProperty, True, (0, 0, 0))
+    return property
