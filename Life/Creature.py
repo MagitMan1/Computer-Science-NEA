@@ -5,12 +5,15 @@ import Life.PrimaryProducers as producers
 import random
 import math
 
+# Creature energy displayed on the side
+# Current creature information tab
+
 # Energy system - 0 energy = death, decreases over time, increased by food. 1x multiplier, movement energy go down faster while moving
 
 # ------------------------------------
-# Reproduction
 # Speed glitching via performance - delta time?, general optimisation
-# Extensive AI generated dictionary of creature names - Not generating the name in the moment
+# Reproduction
+# Extensive AI generated dictionary of creature names - Not generating the name at the moment
 # MAJOR CODE CLEANUP
 # Seed loading
 # creature avoids water
@@ -112,7 +115,8 @@ def spawnRace(population, name, speed, trophicLevel, EatTime, EvadeTime, FOV, vi
             "predatorLocation": None,
             "evadeTime": EvadeTime * 1000 if trophicLevel in ["p", "s"] else None,
             "FOV": FOV,
-            "viewDistance": viewDistance
+            "viewDistance": viewDistance,
+            "Energy": 100
         }
     return creatures
 
@@ -139,8 +143,7 @@ def creatureVision(spawnX, spawnY, creature):
         points.append((pos[0] + math.cos(rayAngle) * length, pos[1] + math.sin(rayAngle) * length))
 
     if creature["creatureVisionVisualisation"]:
-        background = worldGenerator.base
-        pygame.draw.polygon(s, (255-background[0], 255-background[1], 255-background[2], 100), points)
+        pygame.draw.polygon(s, (CalculateVisionColor()), points)
 
     minX = max(0, int(min(p[0] for p in points)))
     maxX = min(surface.get_width(), int(max(p[0] for p in points)))
@@ -327,3 +330,30 @@ def findClusterAtPosition(x, y, tolerance):
             if abs(px - int(x)) <= tolerance and abs(py - int(y)) <= tolerance:
                 return clusterId
     return None
+
+def checkMouseHover(creature, mousePos, camX, camY):
+    mouseX, mouseY = mousePos
+
+    creatureScreenX = camX + creature["x"]
+    creatureScreenY = camY + creature["y"]
+
+    creatureWidth = creature["body"].get_width()
+    creatureHeight = creature["body"].get_height()
+
+    if not (creatureScreenX <= mouseX <= creatureScreenX + creatureWidth and
+            creatureScreenY <= mouseY <= creatureScreenY + creatureHeight):
+        return False
+
+    relativeX = int(mouseX - creatureScreenX)
+    relativeY = int(mouseY - creatureScreenY)
+
+    try:
+        pixel = creature["body"].get_at((relativeX, relativeY))
+        return pixel.a > 0
+    except IndexError:
+        return False
+
+def CalculateVisionColor():
+    background = worldGenerator.base
+    color = (255 - background[0], 255 - background[1], 255 - background[2], 100)
+    return color

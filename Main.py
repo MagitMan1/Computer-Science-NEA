@@ -35,9 +35,9 @@ creatureBase.surface = screen
 grass = Life.PrimaryProducers.generateRandomPixels(world, 65)
 
 # Creatures
-pConsumers = creatureBase.spawnRace(3, "Race1", 0.75, "p", 2, 5, 30, 115)
-#sConsumers = creatureBase.spawnRace(5, "Race2", 0.75, "s", 3, 3, 50, 85)
-#tConsumers = creatureBase.spawnRace(5, "Race3", 0.75, "t", 6, None, 75, 40)
+pConsumers = creatureBase.spawnRace(1, "Race1", 0.75, "p", 2, 5, 30, 115)
+sConsumers = creatureBase.spawnRace(1, "Race2", 0.75, "s", 3, 3, 50, 85)
+tConsumers = creatureBase.spawnRace(1, "Race3", 0.75, "t", 6, None, 75, 40)
 
 creatureBase.world = world
 # ---------------------------------------------------------
@@ -90,6 +90,8 @@ while running:
 
     currentTime = pygame.time.get_ticks()
 
+    mousePos = pygame.mouse.get_pos()
+
     # Visible item blits
     screen.blit(world, (camX, camY))
     screen.blit(UI.seedInfo, (camX - 170, camY))
@@ -105,11 +107,19 @@ while running:
             camY + creature["y"] + creature["body"].get_height() // 2,
             creature
         )
+
         # Functions to call
         creatureBase.turnHandler(creature, currentTime)
         creatureBase.movementHandler(creature, currentTime, world)
         # Blits
-        screen.blit(creature["body"], (camX + creature["x"], camY + creature["y"]))
+        isHovered = creatureBase.checkMouseHover(creature, mousePos, camX, camY)
+        if isHovered:
+            visionColor = creatureBase.CalculateVisionColor()
+            hoveredSprite = creatureBase.tintImage((visionColor[0], visionColor[1], visionColor[2]))
+            screen.blit(hoveredSprite, (camX + creature["x"], camY + creature["y"]))
+        else:
+            screen.blit(creature["body"], (camX + creature["x"], camY + creature["y"]))
+
         # Creature info text
         if creature["Name"] not in drawnSpecies:
             screen.blit(

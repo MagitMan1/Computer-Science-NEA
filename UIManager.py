@@ -15,3 +15,5 @@ seedInfo = font.render(f"Seed: {WorldGenerator.seed}", True, (255, 255, 255))
 def listCreatureColours(currentCreatureName, currentCreatureColor):
     creatureInfo = font.render(currentCreatureName, True, currentCreatureColor)
     return creatureInfo
+
+# Selected Creature Info
