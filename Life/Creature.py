@@ -5,7 +5,12 @@ import Life.PrimaryProducers as producers
 import random
 import math
 
-# Energy system - 0 energy = death, decreases over time, increased by food. 1x multiplier, movement energy go down faster while moving
+# Document Energy system
+# UI
+# Energy attributes
+# The function
+# Death function
+# Calling function
 
 # ------------------------------------
 # Speed glitching via performance - delta time?, general optimisation
@@ -50,6 +55,8 @@ def stateMachine(creature, currentTime, creatures):
                     del creatures[preyId]
                     del creature["preyId"]
 
+            creature["Energy"] += creature["EnergyFromFood"]
+
             creature["atFood"] = False
             creature["foodSeen"] = False
             del creature["eatStartTime"]
@@ -73,7 +80,7 @@ def tintImage(color):
     del arr
     return tinted
 
-def spawnRace(population, name, speed, trophicLevel, EatTime, EvadeTime, FOV, viewDistance):
+def spawnRace(population, name, speed, trophicLevel, EatTime, EvadeTime, FOV, viewDistance, idleEnergyLoss, movingEnergyLoss, energyFromFood):
     global creatures
     if not(trophicLevel == "p" or trophicLevel == "s" or trophicLevel == "t"):
         raise TypeError("Incorrect trophic level specified, cannot create creature")
@@ -113,7 +120,10 @@ def spawnRace(population, name, speed, trophicLevel, EatTime, EvadeTime, FOV, vi
             "evadeTime": EvadeTime * 1000 if trophicLevel in ["p", "s"] else None,
             "FOV": FOV,
             "viewDistance": viewDistance,
-            "Energy": 100
+            "Energy": 100,
+            "IdleEnergyLossRate": idleEnergyLoss,
+            "MovingEnergyLossRate": movingEnergyLoss,
+            "EnergyFromFood": energyFromFood
         }
     return creatures
 
@@ -270,8 +280,8 @@ def turnHandler(creature, currentTime):
 
 def movementHandler(creature, currentTime, worldSurface):
     # Clamp to world boundaries (both min and max)
-    creature["x"] = max(0, min(creature["x"], worldSurface.get_width() - (creature["body"].get_width()/3)))
-    creature["y"] = max(0, min(creature["y"], worldSurface.get_height() - (creature["body"].get_height()/3)))
+    creature["x"] = max(0, min(creature["x"], worldSurface.get_width() - (creature["body"].get_width()/4)))
+    creature["y"] = max(0, min(creature["y"], worldSurface.get_height() - (creature["body"].get_height()/4)))
 
     if not creature["currentState"] == "Frozen":
         dx = creature["lookDirectionX"]
@@ -286,8 +296,12 @@ def movementHandler(creature, currentTime, worldSurface):
                 mag = math.sqrt(dx ** 2 + dy ** 2)
                 if mag > 0:
                     move(dx, dy, mag, creature)
+                    EnergyLoss(creature["MovingEnergyLossRate"], creature)
+            else:
+                EnergyLoss(creature["IdleEnergyLossRate"], creature)
 
         elif creature["currentState"] == "Evading":
+            EnergyLoss(creature["MovingEnergyLossRate"], creature)
             mag = math.sqrt(dx ** 2 + dy ** 2)
             if mag > 0:
                 move(dx, dy, mag, creature)
@@ -303,6 +317,7 @@ def movementHandler(creature, currentTime, worldSurface):
                     creature["currentState"] = "Roaming"
 
         elif creature["currentState"] == "Chasing":
+            EnergyLoss(creature["MovingEnergyLossRate"], creature)
             mag = math.sqrt(dx ** 2 + dy ** 2)
             if mag > 0:
                 move(dx, dy, mag, creature)
@@ -354,3 +369,18 @@ def CalculateVisionColor():
     background = worldGenerator.base
     color = (255 - background[0], 255 - background[1], 255 - background[2], 100)
     return color
+
+def EnergyLoss(lossRate, creature):
+    # Reduce energy by the inputed rate every tick
+    creature["Energy"] = creature["Energy"] - lossRate
+    energy = creature["Energy"]
+    if energy <= 0:
+        Death(creature)
+    if energy > 100:
+        creature["Energy"] = 100
+
+def Death(creature):
+    for cid, c in creatures.items():
+        if c is creature:
+            creatureID = cid
+    del creatures[creatureID]

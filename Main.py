@@ -35,7 +35,7 @@ creatureBase.surface = screen
 grass = Life.PrimaryProducers.generateRandomPixels(world, 65)
 
 # Creatures
-pConsumers = creatureBase.spawnRace(1, "Race1", 0.75, "p", 2, 5, 30, 115)
+pConsumers = creatureBase.spawnRace(1, "Race1", 0.75, "p", 2, 5, 30, 115, 0.07, 0.09, 45)
 #sConsumers = creatureBase.spawnRace(1, "Race2", 0.75, "s", 3, 3, 50, 85)
 #tConsumers = creatureBase.spawnRace(1, "Race3", 0.75, "t", 6, None, 75, 40)
 
@@ -136,7 +136,7 @@ while running:
         # Properties:
         if hoveredCreature is not None:
             race = str(creature["Name"])
-            energy = str(creature["Energy"])
+            energy = str(int(creature["Energy"]))
             state = str(creature["currentState"])
             screen.blit(UI.displayProperty(f"Race:                   {race}"), (camX + 735, camY + 35))
             screen.blit(UI.displayProperty(f"Energy:                   {energy}"), (camX + 735, camY + 70))
