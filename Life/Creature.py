@@ -61,7 +61,7 @@ def stateMachine(creature, currentTime, creatures):
             creature["creatureVisionVisualisation"] = True
             currentState = "Roaming"
 
-    # Only calculate energy loss if the creature is moving
+    #Only calculate energy loss if the creature is moving
     if creature["currentState"] not in ["Frozen", "Eating"]:
         EnergyLoss(creature["MovingEnergyLossRate"] if not creature["ShouldStop"] else creature["IdleEnergyLossRate"], creature)
 
