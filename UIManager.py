@@ -5,6 +5,7 @@ import WorldGeneration.WorldGenerator as WorldGenerator
 
 font = pygame.font.SysFont("Times", 30)
 smallFont = pygame.font.SysFont("Times", 27)
+bigFont = pygame.font.SysFont("Times", 40)
 
 # Loading text
 loadingText = font.render(f"Generating world...", True, (255, 255, 255))
@@ -29,3 +30,7 @@ def infoTitleText():
 def displayProperty(creatureProperty):
     property = smallFont.render(creatureProperty, True, (0, 0, 0))
     return property
+
+def displayBigText(textToDisplay, colour):
+    displayText = bigFont.render(textToDisplay, True, colour)
+    return displayText

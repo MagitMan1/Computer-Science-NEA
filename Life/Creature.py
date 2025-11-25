@@ -5,17 +5,12 @@ import Life.PrimaryProducers as producers
 import random
 import math
 
-# Document Energy system
-# UI
-# Energy attributes
-# The function
-# Death function
-# Calling function
+# Speed glitching via performance - delta time?, general optimisation
 
 # ------------------------------------
-# Speed glitching via performance - delta time?, general optimisation
 # Reproduction
 # Extensive AI generated dictionary of creature names - Not generating the name at the moment
+# Mutation in reproduction
 # MAJOR CODE CLEANUP
 # Seed loading
 # creature avoids water
