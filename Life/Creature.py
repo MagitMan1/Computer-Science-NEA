@@ -7,6 +7,9 @@ import math
 
 # Speed glitching via performance - delta time?, general optimisation
 
+# Document:
+# Energy loss call changes
+
 # ------------------------------------
 # Reproduction
 # Extensive AI generated dictionary of creature names - Not generating the name at the moment
@@ -57,6 +60,11 @@ def stateMachine(creature, currentTime, creatures):
             del creature["eatStartTime"]
             creature["creatureVisionVisualisation"] = True
             currentState = "Roaming"
+
+    # Only calculate energy loss if the creature is moving
+    if creature["currentState"] not in ["Frozen", "Eating"]:
+        EnergyLoss(creature["MovingEnergyLossRate"] if not creature["ShouldStop"] else creature["IdleEnergyLossRate"], creature)
+
     return currentState
 
 def colorDecider():
@@ -291,12 +299,8 @@ def movementHandler(creature, currentTime, worldSurface):
                 mag = math.sqrt(dx ** 2 + dy ** 2)
                 if mag > 0:
                     move(dx, dy, mag, creature)
-                    EnergyLoss(creature["MovingEnergyLossRate"], creature)
-            else:
-                EnergyLoss(creature["IdleEnergyLossRate"], creature)
 
         elif creature["currentState"] == "Evading":
-            EnergyLoss(creature["MovingEnergyLossRate"], creature)
             mag = math.sqrt(dx ** 2 + dy ** 2)
             if mag > 0:
                 move(dx, dy, mag, creature)
@@ -312,7 +316,6 @@ def movementHandler(creature, currentTime, worldSurface):
                     creature["currentState"] = "Roaming"
 
         elif creature["currentState"] == "Chasing":
-            EnergyLoss(creature["MovingEnergyLossRate"], creature)
             mag = math.sqrt(dx ** 2 + dy ** 2)
             if mag > 0:
                 move(dx, dy, mag, creature)
