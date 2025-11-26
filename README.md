@@ -1,8 +1,9 @@
 NEW:
-All creatures dead text added.
+FPS displayed in UI now.
+Reduced number of polygons in creature vision for slightly more stable FPS.
 
 BUG FIXES:
 None this release.
 
 Next to add:
-Performance optimisation to stop creature speed being dictated by performance.
+Fix performance drop from creature selection.

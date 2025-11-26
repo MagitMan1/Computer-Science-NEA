@@ -7,14 +7,17 @@ import math
 
 # Speed glitching via performance - delta time?, general optimisation
 
-# Document:
-# Energy loss call changes
+# Document
+# Find which part causes the drop
+# Is it tint causing the drop in performance? Test and document the testing
+# Would changing fetching creature states on a timer rather than every frame actually improve performance?
 
 # ------------------------------------
 # Reproduction
 # Extensive AI generated dictionary of creature names - Not generating the name at the moment
 # Mutation in reproduction
-# MAJOR CODE CLEANUP
+# Add user controllable options to the screen
+# MAJOR CODE CLEANUP - Energy function calls change! REMEMEBER THIS
 # Seed loading
 # creature avoids water
 
@@ -62,6 +65,7 @@ def stateMachine(creature, currentTime, creatures):
             currentState = "Roaming"
 
     # Handle energy loss
+    # PART OF THE MAJOR CODE CLEANUP
     if creature["currentState"] not in ["Frozen", "Eating"]:
         EnergyLoss(creature["MovingEnergyLossRate"] if not creature["ShouldStop"] else creature["IdleEnergyLossRate"], creature)
 
@@ -136,7 +140,7 @@ def creatureVision(spawnX, spawnY, creature):
     length = creature["viewDistance"]
 
     fov = math.radians(fov)
-    numRays = 5
+    numRays = 3
     s = pygame.Surface(surface.get_size(), pygame.SRCALPHA)
 
     pos = (spawnX, spawnY)

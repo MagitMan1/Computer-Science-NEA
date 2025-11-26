@@ -10,12 +10,12 @@ pygame.init()
 clock = pygame.time.Clock()
 
 # User settings:
-windowedResolution = 1280, 720
-backgroundColor = (70, 70, 70)
 camSpeed = 2
-devMode = True
+displayFPS = True
 
 # Basic Setup
+windowedResolution = 1280, 720
+backgroundColor = (70, 70, 70)
 running = True
 screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 windowName = pygame.display.set_caption("Evolution Simulator (NEA)")
@@ -36,8 +36,8 @@ grass = Life.PrimaryProducers.generateRandomPixels(world, 65)
 
 # Creatures
 pConsumers = creatureBase.spawnRace(1, "Race1", 0.75, "p", 2, 5, 30, 115, 0.07, 0.09, 20)
-#sConsumers = creatureBase.spawnRace(1, "Race2", 0.75, "s", 3, 3, 50, 85)
-#tConsumers = creatureBase.spawnRace(1, "Race3", 0.75, "t", 6, None, 75, 40)
+sConsumers = creatureBase.spawnRace(1, "Race2", 0.75, "s", 3, 3, 50, 85, 0.085, 0.1, 35)
+tConsumers = creatureBase.spawnRace(1, "Race3", 0.75, "t", 6, None, 75, 40, 0.09, 0.11, 45)
 
 creatureBase.world = world
 # ---------------------------------------------------------
@@ -152,6 +152,10 @@ while running:
 
     # Regrowing grass
     Life.PrimaryProducers.regrowGrass(currentTime)
+
+    # Display FPS
+    if displayFPS:
+        screen.blit(UI.displayBigText(str(int(clock.get_fps())), (255, 255, 255)), (10, 5))
 
     # Final display flip
     pygame.display.flip()
