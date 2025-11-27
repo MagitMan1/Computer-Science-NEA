@@ -5,7 +5,18 @@ import Life.PrimaryProducers as producers
 import random
 import math
 
-# Reproduction
+# DONE:
+# Creatures have a "DesireToReproduce" attribute, starts at 0
+# Desire increases over time
+# Once at 100, it stops increasing
+
+# TO DO:
+# If they see another the same species as them, they chase
+# 2 Creature of the same race meet and stop moving
+# A heart sprite of contrasting color is displayed beneath them, breed timer started
+# Breed timer finishes
+# New creatures spawned, amount is a randomly decided creature attrivute on spawn, random range for every creature, highly individual
+# All creatures resume standard roaming, including parents
 
 # ------------------------------------
 # Mutation in reproduction
@@ -65,6 +76,10 @@ def stateMachine(creature, currentTime, creatures):
     if creature["currentState"] not in ["Frozen", "Eating"]:
         EnergyLoss(creature["MovingEnergyLossRate"] if not creature["ShouldStop"] else creature["IdleEnergyLossRate"], creature)
 
+    if creature["DesireToReproduce"] <= 100:
+        creature["DesireToReproduce"] += creature["DesireIncreaseRate"]
+        print(creature["DesireToReproduce"])
+
     return currentState
 
 def colorDecider():
@@ -83,7 +98,7 @@ def tintImage(color):
     del arr
     return tinted
 
-def spawnRace(population, name, speed, trophicLevel, EatTime, EvadeTime, FOV, viewDistance, idleEnergyLoss, movingEnergyLoss, energyFromFood):
+def spawnRace(population, name, speed, trophicLevel, EatTime, EvadeTime, FOV, viewDistance, idleEnergyLoss, movingEnergyLoss, energyFromFood, desireIncreaseRate):
     global creatures
     if not(trophicLevel == "p" or trophicLevel == "s" or trophicLevel == "t"):
         raise TypeError("Incorrect trophic level specified, cannot create creature")
@@ -130,7 +145,9 @@ def spawnRace(population, name, speed, trophicLevel, EatTime, EvadeTime, FOV, vi
             "Energy": 100,
             "IdleEnergyLossRate": idleEnergyLoss,
             "MovingEnergyLossRate": movingEnergyLoss,
-            "EnergyFromFood": energyFromFood
+            "EnergyFromFood": energyFromFood,
+            "DesireToReproduce": 0,
+            "DesireIncreaseRate": desireIncreaseRate
         }
     return creatures
 
