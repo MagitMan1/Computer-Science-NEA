@@ -1,10 +1,10 @@
-#NEW:
-##Switched world generation to open simplex and numpy, meaning:
-  1. EXTREMEMELY fast load times.
-  2. Much more visually appealling and fit for purpose worlds
+## Improvements:
+### Switched world generation to OpenSimplex + NumPy:
+1. **Extremely** fast load times  
+2. Much more visually appealing, smooth, and consistent worlds
 
-##Next to add:
-Creature reproduction
+## Next to Add
+- Creature reproduction
 
-##BUG FIXES:
-None
+## Bug Fixes
+- None
