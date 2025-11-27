@@ -1,9 +1,10 @@
-NEW:
-FPS displayed in UI now.
-Reduced number of polygons in creature vision for slightly more stable FPS.
+#NEW:
+##Switched world generation to open simplex and numpy, meaning:
+  1. EXTREMEMELY fast load times.
+  2. Much more visually appealling and fit for purpose worlds
 
-BUG FIXES:
-None this release.
+##Next to add:
+Creature reproduction
 
-Next to add:
-Fix performance drop from creature selection.
+##BUG FIXES:
+None
