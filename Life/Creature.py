@@ -5,21 +5,17 @@ import Life.PrimaryProducers as producers
 import random
 import math
 
-# Speed glitching via performance - delta time?, general optimisation
-
-# Document
-# Find which part causes the drop
-# Is it tint causing the drop in performance? Test and document the testing
-# Would changing fetching creature states on a timer rather than every frame actually improve performance?
+# Reproduction
 
 # ------------------------------------
-# Reproduction
-# Extensive AI generated dictionary of creature names - Not generating the name at the moment
 # Mutation in reproduction
+# Extensive AI generated dictionary of creature names - Not generating the name at the moment
+# creature avoids water
+# Camera distance control with scroll wheel
 # Add user controllable options to the screen
 # MAJOR CODE CLEANUP - Energy function calls change! REMEMEBER THIS
 # Seed loading
-# creature avoids water
+# Game polishing
 
 # Basic setup
 creatures = {}
@@ -102,10 +98,14 @@ def spawnRace(population, name, speed, trophicLevel, EatTime, EvadeTime, FOV, vi
         y = random.randint(0, height)
         body = tintImage(color)
 
+        selectedBodyColor = CalculateVisionColor()
+        selectedSprite = tintImage((selectedBodyColor[0], selectedBodyColor[1], selectedBodyColor[2]))
+
         creatures[startId + i] = {
             "Name": name,
             "Speed": speed,
             "body": body,
+            "hoveredBodyColor": selectedSprite,
             "color": color,
             "TrophicLevel": trophicLevel,
             "x": x,

@@ -27,7 +27,7 @@ screen.blit(UI.loadingText, ((screen.get_width() // 2)- (UI.loadingText.get_widt
 pygame.display.flip()
 
 # Generate world
-world = WorldGenerator.PerlinNoiseWorldGenerator(WorldGenerator.seed)
+world = WorldGenerator.PerlinNoiseWorldGenerator()
 
 # Life setup ----------------------------------------------
 creatureBase.surface = screen
@@ -116,9 +116,7 @@ while running:
         isHovered = creatureBase.checkMouseHover(creature, mousePos, camX, camY)
         if isHovered:
             hoveredCreature = creature
-            visionColor = creatureBase.CalculateVisionColor()
-            hoveredSprite = creatureBase.tintImage((visionColor[0], visionColor[1], visionColor[2]))
-            screen.blit(hoveredSprite, (camX + creature["x"], camY + creature["y"]))
+            screen.blit(creature["hoveredBodyColor"], (camX + creature["x"], camY + creature["y"]))
         else:
             screen.blit(creature["body"], (camX + creature["x"], camY + creature["y"]))
 

@@ -1,41 +1,53 @@
-# World gen
+import numpy as np
 import pygame
+from opensimplex import OpenSimplex
 import random
-from perlin_noise import PerlinNoise
-
-pygame.init()
-
-# User settings:
-Octaves = 2
-Scale = 7
-worldSize = 720, 720
 
 # Basic Setup
 seed = random.randint(0, 999999)
+worldSize = 720
+Scale = 10
 
-# Randomise colours using same word seed
-random.seed(seed + 1)
+# Initialize Pygame
+pygame.init()
+worldSurface = pygame.Surface((worldSize, worldSize))
+
+# Color setup
 water = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-random.seed(seed)
 base = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+while water == base:
+    water = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
-worldSurface = pygame.Surface(worldSize)
+def generateNoiseGrid(width, height, xCoords, yCoords, noiseGen):
+    noiseValues = np.zeros((height, width))
 
-def PerlinNoiseWorldGenerator(seed): # Simply generates and colours the world
+    for y in range(height):
+        ny = yCoords[y]
+        for x in range(width):
+            noiseValues[y, x] = noiseGen.noise2(xCoords[x], ny)
+
+    return noiseValues
+
+def PerlinNoiseWorldGenerator():
     global worldSurface
     print("Generating World...")
-    worldNoise = PerlinNoise(seed=seed, octaves=Octaves)
 
-    for y in range(worldSize[1]):
-        for x in range(worldSize[0]):
-            nx = x / worldSize[0] * Scale
-            ny = y / worldSize[1] * Scale
-            worldValue = (worldNoise([nx, ny]) + 1) / 2
-            if worldValue < 0.3:
-                color = water
-            else:
-                color = base
-            worldSurface.set_at((x, y), color)
+    noiseGen = OpenSimplex(seed=seed)
 
-    print("World generated")
+    width, height = worldSize, worldSize
+    scaleX = Scale / width
+    scaleY = Scale / height
+
+    xCoords = np.arange(width) * scaleX
+    yCoords = np.arange(height) * scaleY
+
+    noiseValues = generateNoiseGrid(width, height, xCoords, yCoords, noiseGen)
+
+    waterMask = noiseValues < -0.4
+    rgbArray = np.zeros((height, width, 3), dtype=np.uint8)
+    rgbArray[waterMask] = water
+    rgbArray[~waterMask] = base
+
+    pygame.surfarray.blit_array(worldSurface, rgbArray)
+    print("World Generated")
     return worldSurface
