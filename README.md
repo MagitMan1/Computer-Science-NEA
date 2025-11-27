@@ -3,8 +3,8 @@
 1. **Extremely** fast load times  
 2. Much more visually appealing, smooth, and consistent worlds
 
-## Next to Add
+## Currently Working On:
 - Creature reproduction
 
-## Bug Fixes
+## Bug Fixes:
 - None
