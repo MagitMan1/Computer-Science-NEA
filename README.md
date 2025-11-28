@@ -1,7 +1,7 @@
 ## Improvements:
 ### Switched world generation to OpenSimplex + NumPy:
 1. **Extremely** fast load times  
-2. Much more visually appealing, smooth, and consistent worlds
+2. More visually appealing worlds
 
 ## Bug Fixes:
 - None
